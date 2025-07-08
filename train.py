@@ -2,13 +2,30 @@ import modal
 
 app = modal.App("example-get-started")
 
+import modal
 
-@app.function()
-def square(x):
-    print("This code is running on a remote worker!")
-    return x**2
+image = (modal.Image.debian_slim()
+         .pip_install_from_requirements("requirements.txt")
+         .apt_install(["wget", "unzip", "ffmpeg", "libsndfile1"])
+         .run_commands([
+             "cd /tmp && wget https://github.com/karolpiczak/ESC-50/archive/master.zip -O esc50.zip",
+             "cd /tmp && unzip esc50.zip",
+             "mkdir -p /opt/esc50-data",
+             "cp -r /tmp/ESC-50-master/* /opt/esc50-data/",
+             "rm -rf /tmp/esc50.zip /tmp/ESC-50-master"
+         ])
+         .add_local_python_source("model"))
+
+volume = modal.Volume.from_name("esc50-data", create_if_missing=True)
+model_volume = modal.Volume.from_name("esc-model", create_if_missing=True)
+
+
+
+@app.function(image=image, gpu="A10G", volumes={"/data": volume, "/models": model_volume }, timeout=60*60*3)
+def train():
+    print("training")
 
 
 @app.local_entrypoint()
 def main():
-    print("the square is", square.remote(42))
+    train.remote()
