@@ -9,6 +9,7 @@ import soundfile as sf
 import io
 import numpy as np
 import librosa
+import requests
 
 app = modal.App('adio-cnn-inference')
 
@@ -89,6 +90,25 @@ class AudioClassifier:
             predictions = [{"class": self.classes[idx.item], "confidence": prob.item} for prob, idx in zip(top3_probs, top3_indexes)]
 
         return {"predictions:": predictions}
+    
+
+@app.local_entrypoint()
+def main():
+    audio_data = sf.read('birds.wav')
+
+    buffer = io.BytesIO(sf.write(buffer, audio_data, 22050, format="WAV"))
+    audio_b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    payload = {"audio_data":  audio_b64}
+
+    server = AudioClassifier()
+    url = server.inference.get_web_url()
+    response = requests.post(url, json=payload)
+    response.raise_for_status()
+
+    result = response.json()
+    print("Top predictions:")
+    for pred in result.get("predictions", []):
+        print(f' -{pred['class']} {pred['confidence']:0.2%}')
 
 
 
