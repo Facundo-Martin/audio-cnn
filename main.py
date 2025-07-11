@@ -1,3 +1,4 @@
+from typing import Dict, List, Any, Tuple
 import modal 
 import torch.nn as nn
 import torchaudio.transforms as T
