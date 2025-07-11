@@ -1,0 +1,27 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { ESC50_EMOJI_MAP } from "./const";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function getColor(value: number): [number, number, number] {
+  let r, g, b;
+
+  if (value > 0) {
+    r = 255 * (1 - value * 0.8);
+    g = 255 * (1 - value * 0.5);
+    b = 255;
+  } else {
+    r = 255;
+    g = 255 * (1 + value * 0.5);
+    b = 255 * (1 + value * 0.8);
+  }
+
+  return [Math.round(r), Math.round(g), Math.round(b)];
+}
+
+export function getEmojiForClass(className: string): string {
+  return ESC50_EMOJI_MAP[className] ?? "🔈";
+}
