@@ -1,8 +1,9 @@
+from typing import Dict, Optional, Tuple, Union
 import torch.nn as nn
 import torch
 
 class ResidualBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1):
+    def __init__(self, in_channels: int, out_channels: int, stride: int = 1) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, 3, stride, padding = 1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
@@ -10,11 +11,11 @@ class ResidualBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channels)
 
         self.shortcut = nn.Sequential()
-        self.use_shortcut = stride != 1 or in_channels != out_channels
+        self.use_shortcut: bool = stride != 1 or in_channels != out_channels
         if self.use_shortcut:
             self.shortcut = nn.Sequential(nn.Conv2d(in_channels, out_channels, 1, stride=stride, bias=False), nn.BatchNorm2d(out_channels))
 
-    def forward(self, x, fmap_dict=None, prefix=""):
+    def forward(self, x: torch.Tensor, fmap_dict: Optional[Dict[str, torch.Tensor]] = None, prefix: str = "") -> torch.Tensor:
         out = self.conv1(x)
         out = self.bn1(out)
         out = torch.relu(out)
@@ -33,7 +34,7 @@ class ResidualBlock(nn.Module):
         return out
     
 class audioCNN(nn.Module):
-    def __init__(self, num_classes=50):
+    def __init__(self, num_classes: int = 50) -> None:
         super().__init__()
         self.conv1 = nn.Sequential(nn.Conv2d(1, 64, 7, stride=2, padding=3, bias=False), nn.BatchNorm2d(64), nn.ReLU(inplace=True), nn.MaxPool2d(3, stride=2, padding=1))
         self.layer1 = nn.ModuleList([ResidualBlock(64, 64) for i in range(3)])
@@ -45,7 +46,7 @@ class audioCNN(nn.Module):
         self.dropout = nn.Dropout2d(0.5)
         self.fc = nn.Linear(512, num_classes)
 
-    def forward(self, x, return_feature_maps=False):
+    def forward(self, x: torch.Tensor, return_feature_maps: bool = False) -> Union[torch.Tensor, Tuple[torch.Tensor, Dict[str, torch.Tensor]]]:
         if not return_feature_maps:
             x = self.conv1(x)
             for block in self.layer1:
