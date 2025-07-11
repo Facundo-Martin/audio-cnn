@@ -22,7 +22,7 @@ image = (modal.Image.debian_slim()
 model_volume = modal.Volume.from_name("esc-model")
 
 class AudioProcessor:
-    def __init__(self):
+    def __init__(self) -> None:
         self.transform = nn.Sequential(
             T.MelSpectrogram(
             sample_rate=44100,
@@ -35,7 +35,7 @@ class AudioProcessor:
         T.AmplitudeToDB() 
         )
     
-    def process_audio_chunk(self, audio_data):
+    def process_audio_chunk(self, audio_data: np.ndarray) -> torch.Tensor:
         waveform = torch.from_numpy(audio_data).float()
         waveform = waveform.unsqueeze(0)
 
